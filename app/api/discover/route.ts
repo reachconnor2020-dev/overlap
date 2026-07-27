@@ -1,0 +1,49 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getCurrentCoupleId } from '@/lib/session';
+import { compatibilityScore, sharedTagLabels } from '@/lib/matching';
+
+export async function GET() {
+  const coupleId = await getCurrentCoupleId();
+  if (!coupleId) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
+
+  const me = await prisma.couple.findUnique({
+    where: { id: coupleId },
+    include: { tags: { include: { tag: true } } },
+  });
+  if (!me) return NextResponse.json({ error: 'Couple not found' }, { status: 404 });
+
+  const alreadySwiped = await prisma.swipe.findMany({
+    where: { fromCoupleId: coupleId },
+    select: { toCoupleId: true },
+  });
+  const swipedIds = new Set(alreadySwiped.map((s) => s.toCoupleId));
+
+  const candidates = await prisma.couple.findMany({
+    where: {
+      id: { not: coupleId, notIn: [...swipedIds] },
+      onboarded: true,
+    },
+    include: {
+      people: true,
+      tags: { include: { tag: true } },
+    },
+    take: 100,
+  });
+
+  const ranked = candidates
+    .map((c) => ({
+      id: c.id,
+      displayName: c.displayName,
+      city: c.city,
+      bio: c.bio,
+      photoUrl: c.photoUrl,
+      people: c.people.map((p) => p.name),
+      score: compatibilityScore(me, c),
+      sharedTags: sharedTagLabels(me, c),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 30);
+
+  return NextResponse.json(ranked);
+}

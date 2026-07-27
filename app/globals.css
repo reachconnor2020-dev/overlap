@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+::selection {
+  background: theme('colors.circleA');
+  color: theme('colors.ink');
+}
+
+:focus-visible {
+  outline: 2px solid theme('colors.teal');
+  outline-offset: 2px;
+}
+
+.tag-chip {
+  @apply inline-flex items-center gap-1 rounded-full border border-line px-3 py-1 text-sm font-body transition-colors;
+}
+
+.tag-chip[data-active='true'] {
+  @apply border-transparent bg-ink text-paper;
+}

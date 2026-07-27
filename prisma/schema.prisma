@@ -1,0 +1,114 @@
+// Overlap — database schema
+// A "Couple" is the unit that has an account and appears in discovery.
+// Two individual People belong to one Couple. Matching is Couple <-> Couple.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TagCategory {
+  INTEREST
+  HOBBY
+  VALUE
+  POLITICS
+}
+
+enum SwipeDirection {
+  PASS
+  LIKE
+}
+
+model Couple {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  displayName   String // e.g. "Sam & Jordan"
+  city          String?
+  bio           String?
+  photoUrl      String?
+  onboarded     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  people        Person[]
+  tags          CoupleTag[]
+
+  swipesMade    Swipe[]   @relation("SwipesMade")
+  swipesReceived Swipe[]  @relation("SwipesReceived")
+
+  matchesA      Match[]   @relation("MatchCoupleA")
+  matchesB      Match[]   @relation("MatchCoupleB")
+}
+
+model Person {
+  id        String   @id @default(cuid())
+  coupleId  String
+  couple    Couple   @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  name      String
+  age       Int?
+  createdAt DateTime @default(now())
+}
+
+model Tag {
+  id       String      @id @default(cuid())
+  label    String      @unique
+  category TagCategory
+
+  couples  CoupleTag[]
+}
+
+// Join table with an optional weight, so "politics" alignment can be
+// weighted differently than a shared hobby if a couple cares more about it.
+model CoupleTag {
+  coupleId String
+  tagId    String
+  weight   Int      @default(1) // 1 = normal, 2 = "this matters a lot to us"
+
+  couple   Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([coupleId, tagId])
+}
+
+model Swipe {
+  id             String         @id @default(cuid())
+  fromCoupleId   String
+  toCoupleId     String
+  direction      SwipeDirection
+  createdAt      DateTime       @default(now())
+
+  fromCouple     Couple @relation("SwipesMade", fields: [fromCoupleId], references: [id], onDelete: Cascade)
+  toCouple       Couple @relation("SwipesReceived", fields: [toCoupleId], references: [id], onDelete: Cascade)
+
+  @@unique([fromCoupleId, toCoupleId])
+}
+
+model Match {
+  id          String    @id @default(cuid())
+  coupleAId   String
+  coupleBId   String
+  score       Int // compatibility score at time of match, 0-100
+  createdAt   DateTime  @default(now())
+
+  coupleA     Couple    @relation("MatchCoupleA", fields: [coupleAId], references: [id], onDelete: Cascade)
+  coupleB     Couple    @relation("MatchCoupleB", fields: [coupleBId], references: [id], onDelete: Cascade)
+
+  messages    Message[]
+
+  @@unique([coupleAId, coupleBId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  matchId   String
+  senderCoupleId String
+  body      String
+  createdAt DateTime @default(now())
+
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+}
