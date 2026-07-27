@@ -10,37 +10,39 @@ async function assertParticipant(matchId: string, coupleId: string) {
   return match;
 }
 
-export async function GET(_req: Request, { params }: { params: { matchId: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ matchId: string }> }) {
   const coupleId = await getCurrentCoupleId();
   if (!coupleId) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const match = await assertParticipant(params.matchId, coupleId);
+  const { matchId } = await params;
+  const match = await assertParticipant(matchId, coupleId);
   if (!match) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const messages = await prisma.message.findMany({
-    where: { matchId: params.matchId },
+    where: { matchId },
     orderBy: { createdAt: 'asc' },
   });
 
   return NextResponse.json(messages);
 }
 
-export async function POST(req: Request, { params }: { params: { matchId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ matchId: string }> }) {
   const coupleId = await getCurrentCoupleId();
   if (!coupleId) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
-  const match = await assertParticipant(params.matchId, coupleId);
+  const { matchId } = await params;
+  const match = await assertParticipant(matchId, coupleId);
   if (!match) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const body = await req.json();
-  const parsed = messageSchema.safeParse({ ...body, matchId: params.matchId });
+  const parsed = messageSchema.safeParse({ ...body, matchId });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   const message = await prisma.message.create({
     data: {
-      matchId: params.matchId,
+      matchId,
       senderCoupleId: coupleId,
       body: parsed.data.body,
     },
