@@ -29,9 +29,14 @@ model Couple {
   passwordHash  String
   displayName   String // e.g. "Sam & Jordan"
   city          String?
+  latitude      Float?
+  longitude     Float?
   bio           String?
   photoUrl      String?
   onboarded     Boolean   @default(false)
+  emailVerified Boolean   @default(false)
+  verificationCode        String?
+  verificationCodeExpires DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

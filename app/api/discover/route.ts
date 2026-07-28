@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentCoupleId } from '@/lib/session';
 import { compatibilityScore, sharedTagLabels } from '@/lib/matching';
+import { milesBetween } from '@/lib/geo';
 
 export async function GET() {
   const coupleId = await getCurrentCoupleId();
@@ -41,6 +42,15 @@ export async function GET() {
       people: c.people.map((p) => p.name),
       score: compatibilityScore(me, c),
       sharedTags: sharedTagLabels(me, c),
+      distanceMiles:
+        me.latitude != null && me.longitude != null && c.latitude != null && c.longitude != null
+          ? Math.round(
+              milesBetween(
+                { latitude: me.latitude, longitude: me.longitude },
+                { latitude: c.latitude, longitude: c.longitude }
+              )
+            )
+          : null,
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 30);

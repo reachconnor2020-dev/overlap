@@ -10,6 +10,8 @@ export const signupSchema = z.object({
 
 export const profileSchema = z.object({
   city: z.string().max(80).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
   bio: z.string().max(600).optional(),
   photoUrl: z.string().url().optional().or(z.literal('')),
   tags: z

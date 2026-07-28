@@ -3,12 +3,16 @@
 import { useEffect, useState } from 'react';
 import NavBar from '@/components/NavBar';
 import Button from '@/components/Button';
+import PhotoUpload from '@/components/PhotoUpload';
+import LocationPicker from '@/components/LocationPicker';
 
 type Tag = { id: string; label: string; category: 'INTEREST' | 'HOBBY' | 'VALUE' | 'POLITICS' };
 type CoupleTag = { tagId: string; weight: number; tag: Tag };
 type CoupleProfile = {
   displayName: string;
   city: string | null;
+  latitude: number | null;
+  longitude: number | null;
   bio: string | null;
   photoUrl: string | null;
   people: { name: string }[];
@@ -27,6 +31,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<CoupleProfile | null>(null);
   const [selected, setSelected] = useState<Map<string, number>>(new Map());
   const [city, setCity] = useState('');
+  const [coords, setCoords] = useState<{ lat?: number; lng?: number }>({});
   const [bio, setBio] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [saving, setSaving] = useState(false);
@@ -40,6 +45,7 @@ export default function ProfilePage() {
       setAllTags(tags);
       setProfile(prof);
       setCity(prof.city ?? '');
+      setCoords({ lat: prof.latitude ?? undefined, lng: prof.longitude ?? undefined });
       setBio(prof.bio ?? '');
       setPhotoUrl(prof.photoUrl ?? '');
       setSelected(new Map(prof.tags.map((t) => [t.tagId, t.weight])));
@@ -64,6 +70,11 @@ export default function ProfilePage() {
     });
   }
 
+  function handleLocationChange(newCity: string, lat?: number, lng?: number) {
+    setCity(newCity);
+    if (lat !== undefined && lng !== undefined) setCoords({ lat, lng });
+  }
+
   async function handleSave() {
     setSaving(true);
     const res = await fetch('/api/profile', {
@@ -71,6 +82,8 @@ export default function ProfilePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         city,
+        latitude: coords.lat,
+        longitude: coords.lng,
         bio,
         photoUrl,
         tags: [...selected.entries()].map(([tagId, weight]) => ({ tagId, weight })),
@@ -103,15 +116,9 @@ export default function ProfilePage() {
           {profile.people.map((p) => p.name).join(' & ')}
         </p>
 
-        <div className="mt-8 flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-ink/70">City</span>
-            <input
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              className="rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
-            />
-          </label>
+        <div className="mt-8 flex flex-col gap-6">
+          <PhotoUpload value={photoUrl} onChange={setPhotoUrl} />
+          <LocationPicker city={city} onChange={handleLocationChange} />
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-ink/70">Bio</span>
             <textarea
@@ -119,14 +126,6 @@ export default function ProfilePage() {
               onChange={(e) => setBio(e.target.value)}
               rows={3}
               maxLength={600}
-              className="rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-ink/70">Photo URL</span>
-            <input
-              value={photoUrl}
-              onChange={(e) => setPhotoUrl(e.target.value)}
               className="rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
             />
           </label>

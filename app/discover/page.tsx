@@ -14,6 +14,7 @@ type Candidate = {
   people: string[];
   score: number;
   sharedTags: string[];
+  distanceMiles: number | null;
 };
 
 export default function DiscoverPage() {
@@ -78,7 +79,13 @@ export default function DiscoverPage() {
               <h2 className="font-display text-2xl italic">{current.displayName}</h2>
               <span className="font-mono text-xs text-teal">{current.score}% overlap</span>
             </div>
-            {current.city && <p className="mt-1 text-sm text-ink/60">{current.city}</p>}
+            {(current.city || current.distanceMiles !== null) && (
+              <p className="mt-1 text-sm text-ink/60">
+                {current.city}
+                {current.city && current.distanceMiles !== null && ' \u00b7 '}
+                {current.distanceMiles !== null && `${current.distanceMiles} mi away`}
+              </p>
+            )}
             {current.bio && <p className="mt-4 text-sm text-ink/80">{current.bio}</p>}
 
             {current.sharedTags.length > 0 && (

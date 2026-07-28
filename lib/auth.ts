@@ -30,18 +30,36 @@ export const authOptions: NextAuthOptions = {
           id: couple.id,
           email: couple.email,
           name: couple.displayName,
+          emailVerified: couple.emailVerified,
+          onboarded: couple.onboarded,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.coupleId = user.id;
+    async jwt({ token, user, trigger }) {
+      if (user) {
+        token.coupleId = user.id;
+        token.emailVerified = (user as { emailVerified?: boolean }).emailVerified;
+        token.onboarded = (user as { onboarded?: boolean }).onboarded;
+      }
+      // Re-check verification/onboarding status from the DB whenever the
+      // client asks the session to refresh (see update() calls after
+      // verifying a code or finishing onboarding).
+      if (trigger === 'update') {
+        const fresh = await prisma.couple.findUnique({ where: { id: token.coupleId as string } });
+        if (fresh) {
+          token.emailVerified = fresh.emailVerified;
+          token.onboarded = fresh.onboarded;
+        }
+      }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as { id?: string }).id = token.coupleId as string;
+        (session.user as { emailVerified?: boolean }).emailVerified = token.emailVerified as boolean;
+        (session.user as { onboarded?: boolean }).onboarded = token.onboarded as boolean;
       }
       return session;
     },

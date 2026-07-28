@@ -28,13 +28,15 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { city, bio, photoUrl, tags } = parsed.data;
+  const { city, latitude, longitude, bio, photoUrl, tags } = parsed.data;
 
   await prisma.$transaction([
     prisma.couple.update({
       where: { id: coupleId },
       data: {
         city,
+        latitude,
+        longitude,
         bio,
         photoUrl: photoUrl || undefined,
         onboarded: true,

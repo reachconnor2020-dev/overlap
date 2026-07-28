@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { signupSchema } from '@/lib/validators';
+import { issueVerificationCode } from '@/lib/verification';
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -30,6 +31,8 @@ export async function POST(req: Request) {
       },
     },
   });
+
+  await issueVerificationCode(couple.id, couple.email, couple.displayName);
 
   return NextResponse.json({ id: couple.id, email: couple.email }, { status: 201 });
 }

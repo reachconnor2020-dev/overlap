@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Button from '@/components/Button';
+import PhotoUpload from '@/components/PhotoUpload';
+import LocationPicker from '@/components/LocationPicker';
 
 type Tag = { id: string; label: string; category: 'INTEREST' | 'HOBBY' | 'VALUE' | 'POLITICS' };
 
@@ -15,9 +18,11 @@ const CATEGORY_LABELS: Record<Tag['category'], string> = {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { update } = useSession();
   const [tags, setTags] = useState<Tag[]>([]);
   const [selected, setSelected] = useState<Map<string, number>>(new Map());
   const [city, setCity] = useState('');
+  const [coords, setCoords] = useState<{ lat?: number; lng?: number }>({});
   const [bio, setBio] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [saving, setSaving] = useState(false);
@@ -47,6 +52,11 @@ export default function OnboardingPage() {
     });
   }
 
+  function handleLocationChange(newCity: string, lat?: number, lng?: number) {
+    setCity(newCity);
+    if (lat !== undefined && lng !== undefined) setCoords({ lat, lng });
+  }
+
   async function handleSubmit() {
     setError(null);
     if (selected.size < 3) {
@@ -60,6 +70,8 @@ export default function OnboardingPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         city,
+        latitude: coords.lat,
+        longitude: coords.lng,
         bio,
         photoUrl,
         tags: [...selected.entries()].map(([tagId, weight]) => ({ tagId, weight })),
@@ -69,6 +81,7 @@ export default function OnboardingPage() {
     setSaving(false);
 
     if (res.ok) {
+      await update();
       router.push('/discover');
     } else {
       setError('Something went wrong saving your profile.');
@@ -89,16 +102,9 @@ export default function OnboardingPage() {
         something that matters a lot to you.
       </p>
 
-      <div className="mt-8 flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-ink/70">City</span>
-          <input
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
-            placeholder="San Diego, CA"
-          />
-        </label>
+      <div className="mt-8 flex flex-col gap-6">
+        <PhotoUpload value={photoUrl} onChange={setPhotoUrl} />
+        <LocationPicker city={city} onChange={handleLocationChange} />
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-ink/70">Bio</span>
           <textarea
@@ -108,15 +114,6 @@ export default function OnboardingPage() {
             maxLength={600}
             className="rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
             placeholder="A couple of sentences about you two — what you're into, what you're looking for in couple friends."
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-ink/70">Photo URL (optional)</span>
-          <input
-            value={photoUrl}
-            onChange={(e) => setPhotoUrl(e.target.value)}
-            className="rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
-            placeholder="https://…"
           />
         </label>
       </div>

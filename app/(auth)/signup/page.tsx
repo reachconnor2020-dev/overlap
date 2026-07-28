@@ -47,7 +47,7 @@ export default function SignupPage() {
     setLoading(false);
 
     if (signInRes?.ok) {
-      router.push('/onboarding');
+      router.push('/verify');
     } else {
       router.push('/login');
     }
