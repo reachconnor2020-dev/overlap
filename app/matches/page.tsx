@@ -11,6 +11,15 @@ type MatchSummary = {
   lastMessage: { body: string } | null;
 };
 
+function initials(name: string) {
+  return name
+    .split(/\s|&/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('');
+}
+
 export default function MatchesPage() {
   const [matches, setMatches] = useState<MatchSummary[] | null>(null);
 
@@ -36,20 +45,34 @@ export default function MatchesPage() {
           </p>
         )}
 
-        <div className="mt-8 flex flex-col divide-y divide-line">
+        <div className="mt-8 flex flex-col gap-3">
           {matches?.map((m) => (
             <Link
               key={m.matchId}
               href={`/matches/${m.matchId}`}
-              className="flex items-center justify-between py-4 hover:bg-paperDim/60"
+              className="group flex items-center gap-4 rounded-card border border-transparent bg-white/40 px-5 py-4 transition-colors hover:border-line"
             >
-              <div>
-                <p className="font-display text-lg">{m.otherCouple.displayName}</p>
-                <p className="mt-1 text-sm text-ink/60">
+              {m.otherCouple.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={m.otherCouple.photoUrl}
+                  alt=""
+                  className="h-12 w-12 shrink-0 rounded-full border-2 border-paper object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-paper bg-circleAsoft font-display text-sm italic text-ink">
+                  {initials(m.otherCouple.displayName)}
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <h2 className="font-display text-lg">{m.otherCouple.displayName}</h2>
+                <p className="truncate text-sm text-ink/60">
                   {m.lastMessage ? m.lastMessage.body : 'Say hello'}
                 </p>
               </div>
-              <span className="font-mono text-xs text-teal">{m.score}%</span>
+
+              <span className="shrink-0 font-mono text-xs text-teal">{m.score}%</span>
             </Link>
           ))}
         </div>
