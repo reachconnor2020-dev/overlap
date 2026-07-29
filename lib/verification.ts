@@ -16,7 +16,7 @@ export async function issueVerificationCode(coupleId: string, email: string, dis
     data: { verificationCode: code, verificationCodeExpires: expires },
   });
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: EMAIL_FROM,
     to: email,
     subject: `${code} is your Overlap verification code`,
@@ -30,6 +30,10 @@ export async function issueVerificationCode(coupleId: string, email: string, dis
       </div>
     `,
   });
+
+  if (error) {
+    throw new Error(`Failed to send verification email: ${error.message}`);
+  }
 }
 
 export async function checkVerificationCode(coupleId: string, submittedCode: string): Promise<boolean> {
