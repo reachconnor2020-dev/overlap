@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, FormEvent } from 'react';
 import { useParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import Button from '@/components/Button';
+import { getPusherClient } from '@/lib/pusher-client';
 
 type Message = { id: string; senderCoupleId: string; body: string; createdAt: string };
 
@@ -17,17 +18,26 @@ export default function ChatPage() {
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
-      const res = await fetch(`/api/messages/${params.id}`);
-      if (!res.ok || cancelled) return;
-      setMessages(await res.json());
-    }
+    fetch(`/api/messages/${params.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setMessages(data);
+      });
 
-    load();
-    const interval = setInterval(load, 4000);
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe(`match-${params.id}`);
+
+    channel.bind('new-message', (message: Message) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [...prev, message];
+      });
+    });
+
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      channel.unbind_all();
+      pusher.unsubscribe(`match-${params.id}`);
     };
   }, [params.id]);
 
@@ -48,7 +58,7 @@ export default function ChatPage() {
 
     if (res.ok) {
       const message = await res.json();
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
       setText('');
     }
     setSending(false);

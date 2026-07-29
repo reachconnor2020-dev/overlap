@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentCoupleId } from '@/lib/session';
 import { messageSchema } from '@/lib/validators';
-
+import { pusherServer } from '@/lib/pusher-server';
 async function assertParticipant(matchId: string, coupleId: string) {
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match) return null;
@@ -47,6 +47,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ matchId
       body: parsed.data.body,
     },
   });
+  await pusherServer.trigger(`match-${matchId}`, 'new-message', message);
 
   return NextResponse.json(message, { status: 201 });
 }
