@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
 import Button from '@/components/Button';
 import PhotoUpload from '@/components/PhotoUpload';
 import LocationPicker from '@/components/LocationPicker';
+
 
 type Tag = { id: string; label: string; category: 'INTEREST' | 'HOBBY' | 'VALUE' | 'POLITICS' };
 type CoupleTag = { tagId: string; weight: number; tag: Tag };
@@ -27,8 +30,10 @@ const CATEGORY_LABELS: Record<Tag['category'], string> = {
 };
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [profile, setProfile] = useState<CoupleProfile | null>(null);
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);  const [profile, setProfile] = useState<CoupleProfile | null>(null);
   const [selected, setSelected] = useState<Map<string, number>>(new Map());
   const [city, setCity] = useState('');
   const [coords, setCoords] = useState<{ lat?: number; lng?: number }>({});
@@ -74,6 +79,18 @@ export default function ProfilePage() {
     setCity(newCity);
     if (lat !== undefined && lng !== undefined) setCoords({ lat, lng });
   }
+
+async function handleDelete() {
+    setDeleting(true);
+    const res = await fetch('/api/account', { method: 'DELETE' });
+    if (res.ok) {
+      await signOut({ redirect: false });
+      router.push('/');
+    } else {
+      setDeleting(false);
+    }
+  }
+
 
   async function handleSave() {
     setSaving(true);
@@ -157,11 +174,34 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        <div className="mt-10 flex items-center gap-4">
+<div className="mt-10 flex items-center gap-4">
           <Button onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : 'Save changes'}
           </Button>
           {savedAt && <span className="text-sm text-teal">Saved</span>}
+        </div>
+
+        <div className="mt-16 rounded-card border border-circleB/40 p-6">
+          <h2 className="font-display text-lg italic text-circleB">Delete account</h2>
+          <p className="mt-2 text-sm text-ink/70">
+            This permanently deletes your profile, photos, tags, matches, and
+            messages. This can't be undone.
+          </p>
+          <label className="mt-4 flex flex-col gap-1 text-sm">
+            <span className="text-ink/70">Type DELETE to confirm</span>
+            <input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              className="w-40 rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
+            />
+          </label>
+          <button
+            onClick={handleDelete}
+            disabled={confirmText !== 'DELETE' || deleting}
+            className="mt-4 rounded-full bg-circleB px-6 py-3 text-sm font-medium text-paper disabled:opacity-40"
+          >
+            {deleting ? 'Deleting…' : 'Delete my account'}
+          </button>
         </div>
       </div>
     </main>
