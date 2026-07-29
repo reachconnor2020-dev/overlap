@@ -58,7 +58,9 @@ export default function LoginPage() {
             className="rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
           />
         </label>
-
+        <Link href="/forgot-password" className="text-sm font-medium underline">
+          Forgot password?
+        </Link>
         {error && <p className="text-sm text-circleB">{error}</p>}
 
         <Button type="submit" disabled={loading} className="mt-2">

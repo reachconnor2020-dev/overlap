@@ -37,6 +37,8 @@ model Couple {
   emailVerified Boolean   @default(false)
   verificationCode        String?
   verificationCodeExpires DateTime?
+  passwordResetCode        String?
+  passwordResetCodeExpires DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
