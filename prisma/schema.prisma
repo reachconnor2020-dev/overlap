@@ -50,6 +50,35 @@ model Couple {
 
   matchesA      Match[]   @relation("MatchCoupleA")
   matchesB      Match[]   @relation("MatchCoupleB")
+
+  blocksMade      Block[]  @relation("BlocksMade")
+  blocksReceived  Block[]  @relation("BlocksReceived")
+  reportsMade     Report[] @relation("ReportsMade")
+  reportsReceived Report[] @relation("ReportsReceived")
+}
+
+model Block {
+  id              String   @id @default(cuid())
+  blockerCoupleId String
+  blockedCoupleId String
+  createdAt       DateTime @default(now())
+
+  blocker Couple @relation("BlocksMade", fields: [blockerCoupleId], references: [id], onDelete: Cascade)
+  blocked Couple @relation("BlocksReceived", fields: [blockedCoupleId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerCoupleId, blockedCoupleId])
+}
+
+model Report {
+  id               String   @id @default(cuid())
+  reporterCoupleId String
+  reportedCoupleId String
+  reason           String
+  details          String?
+  createdAt        DateTime @default(now())
+
+  reporter Couple @relation("ReportsMade", fields: [reporterCoupleId], references: [id], onDelete: Cascade)
+  reported Couple @relation("ReportsReceived", fields: [reportedCoupleId], references: [id], onDelete: Cascade)
 }
 
 model Person {

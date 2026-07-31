@@ -1,19 +1,36 @@
 'use client';
 
 import { useEffect, useRef, useState, FormEvent } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import Button from '@/components/Button';
+import ReportBlockModal from '@/components/ReportBlockModal';
 import { getPusherClient } from '@/lib/pusher-client';
 
 type Message = { id: string; senderCoupleId: string; body: string; createdAt: string };
+type MatchSummary = {
+  matchId: string;
+  otherCouple: { id: string; displayName: string };
+};
 
 export default function ChatPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [match, setMatch] = useState<MatchSummary | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/matches')
+      .then((r) => r.json())
+      .then((all: MatchSummary[]) => {
+        const found = all.find((m) => m.matchId === params.id);
+        setMatch(found ?? null);
+      });
+  }, [params.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +85,18 @@ export default function ChatPage() {
     <main className="flex min-h-screen flex-col">
       <NavBar />
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-8">
+        <div className="mb-4 flex items-center justify-between border-b border-line pb-4">
+          <h1 className="font-display text-xl italic">{match?.otherCouple.displayName ?? '…'}</h1>
+          {match && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="text-sm text-ink/50 hover:text-circleB"
+            >
+              Report or block
+            </button>
+          )}
+        </div>
+
         <div className="flex-1 space-y-3 overflow-y-auto">
           {messages.map((m) => (
             <div key={m.id} className="max-w-[75%] rounded-2xl border border-line bg-white/50 px-4 py-2 text-sm">
@@ -89,6 +118,15 @@ export default function ChatPage() {
           </Button>
         </form>
       </div>
+
+      {showModal && match && (
+        <ReportBlockModal
+          coupleId={match.otherCouple.id}
+          coupleName={match.otherCouple.displayName}
+          onClose={() => setShowModal(false)}
+          onBlocked={() => router.push('/matches')}
+        />
+      )}
     </main>
   );
 }

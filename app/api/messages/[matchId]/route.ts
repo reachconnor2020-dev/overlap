@@ -3,10 +3,23 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentCoupleId } from '@/lib/session';
 import { messageSchema } from '@/lib/validators';
 import { pusherServer } from '@/lib/pusher-server';
+
 async function assertParticipant(matchId: string, coupleId: string) {
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match) return null;
   if (match.coupleAId !== coupleId && match.coupleBId !== coupleId) return null;
+
+  const otherId = match.coupleAId === coupleId ? match.coupleBId : match.coupleAId;
+  const blocked = await prisma.block.findFirst({
+    where: {
+      OR: [
+        { blockerCoupleId: coupleId, blockedCoupleId: otherId },
+        { blockerCoupleId: otherId, blockedCoupleId: coupleId },
+      ],
+    },
+  });
+  if (blocked) return null;
+
   return match;
 }
 
@@ -47,6 +60,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ matchId
       body: parsed.data.body,
     },
   });
+
   await pusherServer.trigger(`match-${matchId}`, 'new-message', message);
 
   return NextResponse.json(message, { status: 201 });

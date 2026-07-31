@@ -20,9 +20,16 @@ export async function GET() {
   });
   const swipedIds = new Set(alreadySwiped.map((s) => s.toCoupleId));
 
+  const blocks = await prisma.block.findMany({
+    where: { OR: [{ blockerCoupleId: coupleId }, { blockedCoupleId: coupleId }] },
+  });
+  const blockedIds = new Set(
+    blocks.map((b) => (b.blockerCoupleId === coupleId ? b.blockedCoupleId : b.blockerCoupleId))
+  );
+
   const candidates = await prisma.couple.findMany({
     where: {
-      id: { not: coupleId, notIn: [...swipedIds] },
+      id: { not: coupleId, notIn: [...swipedIds, ...blockedIds] },
       onboarded: true,
     },
     include: {

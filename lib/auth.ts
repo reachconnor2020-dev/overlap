@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { codeRateLimit } from '@/lib/rate-limit';
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt' },
@@ -17,6 +18,11 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        const { success } = await codeRateLimit.limit(`login:${credentials.email.toLowerCase()}`);
+        if (!success) {
+          throw new Error('Too many attempts — please wait a few minutes and try again.');
+        }
 
         const couple = await prisma.couple.findUnique({
           where: { email: credentials.email.toLowerCase() },
@@ -43,9 +49,6 @@ export const authOptions: NextAuthOptions = {
         token.emailVerified = (user as { emailVerified?: boolean }).emailVerified;
         token.onboarded = (user as { onboarded?: boolean }).onboarded;
       }
-      // Re-check verification/onboarding status from the DB whenever the
-      // client asks the session to refresh (see update() calls after
-      // verifying a code or finishing onboarding).
       if (trigger === 'update') {
         const fresh = await prisma.couple.findUnique({ where: { id: token.coupleId as string } });
         if (fresh) {

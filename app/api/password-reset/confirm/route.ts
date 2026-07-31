@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { checkPasswordResetCode, consumePasswordResetCode } from '@/lib/passwordReset';
+import { codeRateLimit } from '@/lib/rate-limit';
 
 const schema = z.object({
   email: z.string().email(),
@@ -17,6 +18,11 @@ export async function POST(req: Request) {
   }
 
   const { email, code, newPassword } = parsed.data;
+
+  const { success } = await codeRateLimit.limit(`reset-confirm:${email.toLowerCase()}`);
+  if (!success) {
+    return NextResponse.json({ error: 'Too many attempts — please wait a few minutes and try again.' }, { status: 429 });
+  }
 
   const valid = await checkPasswordResetCode(email, code);
   if (!valid) {
