@@ -43,7 +43,7 @@ export default function LandingPage() {
         </div>
         <div className="flex justify-center">
           <VennMark
-            size={340}
+            size={440}
             labelA="You two"
             labelB="Them two"
             overlapLabel="board games, climate policy, tacos"

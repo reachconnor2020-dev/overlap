@@ -18,8 +18,8 @@ export default function VennMark({
   overlapLabel,
   animated = false,
 }: VennMarkProps) {
-  const r = size * 0.32;
-  const offset = r * 0.62;
+  const r = size * 0.28;
+  const offset = r * 0.55;
   const cy = size / 2;
   const cxA = size / 2 - offset;
   const cxB = size / 2 + offset;
@@ -69,8 +69,8 @@ export default function VennMark({
 
       {overlapLabel && (
         <span
-          className="absolute -translate-x-1/2 -translate-y-1/2 text-center font-display text-sm italic text-ink"
-          style={{ left: size / 2, top: cy, width: r * 1.1 }}
+          className="absolute -translate-x-1/2 -translate-y-1/2 text-center font-display text-xs italic leading-snug text-ink"
+          style={{ left: size / 2, top: cy, width: r * 1.5 }}
         >
           {overlapLabel}
         </span>
