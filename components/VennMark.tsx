@@ -31,29 +31,28 @@ export default function VennMark({
       role="img"
       aria-label={overlapLabel ? `Shared: ${overlapLabel}` : 'Overlapping circles representing two couples'}
     >
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle
-          cx={cxA}
-          cy={cy}
-          r={r}
-          fill="#D9A62E"
-          opacity={0.82}
-          className={animated ? 'animate-drift' : ''}
-        />
-        <circle
-          cx={cxB}
-          cy={cy}
-          r={r}
-          fill="#B4677A"
-          opacity={0.82}
-          style={animated ? { animationDelay: '0.4s' } : undefined}
-          className={animated ? 'animate-drift' : ''}
-        />
+<svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <defs>
+          <filter id="venn-soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="#1B2E2A" floodOpacity="0.14" />
+          </filter>
+        </defs>
+        <g filter="url(#venn-soft-shadow)">
+          <circle cx={cxA} cy={cy} r={r} fill="#D9A62E" className={animated ? 'animate-drift' : ''} />
+          <circle
+            cx={cxB}
+            cy={cy}
+            r={r}
+            fill="#B4677A"
+            style={{ mixBlendMode: 'multiply', ...(animated ? { animationDelay: '0.4s' } : {}) }}
+            className={animated ? 'animate-drift' : ''}
+          />
+        </g>
       </svg>
       {labelA && (
         <span
           className="absolute font-mono text-[11px] uppercase tracking-wide text-ink/70"
-          style={{ left: cxA - r * 0.55, top: cy + r * 0.55 }}
+          style={{ left: cxA - r * 0.5, top: cy - r * 0.16 }}
         >
           {labelA}
         </span>
@@ -61,11 +60,13 @@ export default function VennMark({
       {labelB && (
         <span
           className="absolute font-mono text-[11px] uppercase tracking-wide text-ink/70"
-          style={{ left: cxB - r * 0.35, top: cy + r * 0.55 }}
+          style={{ left: cxB - r * 0.28, top: cy - r * 0.16 }}
         >
           {labelB}
         </span>
       )}
+
+
       {overlapLabel && (
         <span
           className="absolute -translate-x-1/2 -translate-y-1/2 text-center font-display text-sm italic text-ink"
