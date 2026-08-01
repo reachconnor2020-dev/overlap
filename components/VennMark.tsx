@@ -52,7 +52,7 @@ export default function VennMark({
       {labelA && (
         <span
           className="absolute font-mono text-[11px] uppercase tracking-wide text-ink/70"
-          style={{ left: cxA - r * 0.5, top: cy - r * 0.16 }}
+          style={{ left: cxA - r * 0.5, top: cy - r * 0.65  }}
         >
           {labelA}
         </span>
@@ -60,7 +60,7 @@ export default function VennMark({
       {labelB && (
         <span
           className="absolute font-mono text-[11px] uppercase tracking-wide text-ink/70"
-          style={{ left: cxB - r * 0.28, top: cy - r * 0.16 }}
+          style={{ left: cxB - r * 0.28, top: cy - r * 0.65  }}
         >
           {labelB}
         </span>
@@ -69,8 +69,8 @@ export default function VennMark({
 
       {overlapLabel && (
         <span
-          className="absolute -translate-x-1/2 -translate-y-1/2 text-center font-display text-xs italic leading-snug text-ink"
-          style={{ left: size / 2, top: cy, width: r * 1.5 }}
+          className="absolute block -translate-x-1/2 -translate-y-1/2 text-center font-display text-xs italic leading-snug text-ink"
+          style={{ left: size / 2, top: cy, width: r * 0.95 }}
         >
           {overlapLabel}
         </span>
