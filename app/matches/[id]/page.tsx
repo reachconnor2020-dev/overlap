@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
 import Button from '@/components/Button';
 import ReportBlockModal from '@/components/ReportBlockModal';
@@ -10,12 +11,24 @@ import { getPusherClient } from '@/lib/pusher-client';
 type Message = { id: string; senderCoupleId: string; body: string; createdAt: string };
 type MatchSummary = {
   matchId: string;
-  otherCouple: { id: string; displayName: string };
+  otherCouple: { id: string; displayName: string; photoUrl: string | null; people: string[] };
 };
+
+function initials(name: string) {
+  return name
+    .split(/\s|&/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('');
+}
 
 export default function ChatPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { data: session } = useSession();
+  const myCoupleId = session?.user?.id;
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [match, setMatch] = useState<MatchSummary | null>(null);
   const [text, setText] = useState('');
@@ -84,25 +97,58 @@ export default function ChatPage() {
   return (
     <main className="flex min-h-screen flex-col">
       <NavBar />
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-8">
-        <div className="mb-4 flex items-center justify-between border-b border-line pb-4">
-          <h1 className="font-display text-xl italic">{match?.otherCouple.displayName ?? '…'}</h1>
-          {match && (
+
+      {match && (
+        <div className="border-b border-line px-6 py-4">
+          <div className="mx-auto flex max-w-2xl items-center justify-between">
+            <div className="flex items-center gap-3">
+              {match.otherCouple.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={match.otherCouple.photoUrl}
+                  alt=""
+                  className="h-11 w-11 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-circleAsoft font-display text-sm italic text-ink">
+                  {initials(match.otherCouple.displayName)}
+                </div>
+              )}
+              <div>
+                <h1 className="font-display text-lg italic leading-tight">{match.otherCouple.displayName}</h1>
+                {match.otherCouple.people.length > 0 && (
+                  <p className="text-xs text-ink/50">{match.otherCouple.people.join(' & ')}</p>
+                )}
+              </div>
+            </div>
             <button
               onClick={() => setShowModal(true)}
               className="text-sm text-ink/50 hover:text-circleB"
             >
               Report or block
             </button>
-          )}
+          </div>
         </div>
+      )}
 
-        <div className="flex-1 space-y-3 overflow-y-auto">
-          {messages.map((m) => (
-            <div key={m.id} className="max-w-[75%] rounded-2xl border border-line bg-white/50 px-4 py-2 text-sm">
-              {m.body}
-            </div>
-          ))}
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-6">
+        <div className="flex-1 space-y-2 overflow-y-auto">
+          {messages.map((m) => {
+            const isMine = m.senderCoupleId === myCoupleId;
+            return (
+              <div key={m.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
+                    isMine
+                      ? 'rounded-br-sm bg-ink text-paper'
+                      : 'rounded-bl-sm border border-line bg-white/50 text-ink'
+                  }`}
+                >
+                  {m.body}
+                </div>
+              </div>
+            );
+          })}
           <div ref={bottomRef} />
         </div>
 
