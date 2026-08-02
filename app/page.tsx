@@ -101,7 +101,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="border-t border-line px-6 py-8 text-center text-xs text-ink/60">
-        Overlap is built for platonic friendship between couples. Romantic or
+        Hello everyone, Overlap is built for platonic friendship between couples. Romantic or
         sexual intent isn't what this is for.
       </footer>
     </main>
