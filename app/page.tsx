@@ -46,6 +46,8 @@ export default function LandingPage() {
             size={440}
             labelA="You two"
             labelB="Them two"
+            exampleA="rock climbing, sushi"
+            exampleB="wine tasting, true crime"
             overlapLabel="board games, climate policy, tacos"
             animated
           />

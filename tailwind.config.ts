@@ -8,11 +8,11 @@ const config: Config = {
         ink: '#1B2E2A',
         paper: '#EEF1EC',
         paperDim: '#E2E6DD',
-        circleA: '#D9A62E',
-        circleAsoft: '#F0D9A0',
+        circleA: '#3E7C90',
+        circleAsoft: '#AFD3DC',
         circleB: '#B4677A',
         circleBsoft: '#E7C4CC',
-        overlap: '#A65D3E',
+        overlap: '#5B4A63',
         teal: '#4F8577',
         line: '#C9CDC2',
       },
@@ -25,10 +25,6 @@ const config: Config = {
         card: '1.25rem',
       },
       keyframes: {
-        drift: {
-          '0%, 100%': { transform: 'translateX(0)' },
-          '50%': { transform: 'translateX(6px)' },
-        },
         snap: {
           '0%': { transform: 'scale(0.9)', opacity: '0' },
           '60%': { transform: 'scale(1.04)', opacity: '1' },
@@ -36,7 +32,6 @@ const config: Config = {
         },
       },
       animation: {
-        drift: 'drift 6s ease-in-out infinite',
         snap: 'snap 0.5s cubic-bezier(.2,.8,.2,1) forwards',
       },
     },
